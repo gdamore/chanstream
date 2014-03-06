@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package chanstream provides an API that is similar to that used for TCP
+// and Unix Domain sockets (see net.TCP), for use in intra-process
+// communication on top of Go channels.  This makes it easy to swap it for
+// another net.Conn interface. 
+//
+// By using channels, we avoid exposing any
+// interface to other processors, or involving the kernel to perform data
+// copying.
+
 package chanstream
 
 import "net"
