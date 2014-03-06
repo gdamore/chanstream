@@ -27,34 +27,38 @@ import "sync"
 import "time"
 import "io"
 
-// ChanErr implements the error and net.Error interfaces.
+// ChanError implements the error and net.Error interfaces.
 type ChanError struct {
 	err string
 	tmo bool
 	tmp bool
 }
 
+// Error implements the error interface.
 func (e *ChanError) Error() string {
 	return e.err
 }
 
+// Timeout returns true if the error was a time out.
 func (e *ChanError) Timeout() bool {
 	return e.tmo
 }
 
+// Temporary returns true if the error was temporary in nature.  Operations 
+// resulting in temporary errors might be expected to succeed at a later time.
 func (e *ChanError) Temporary() bool {
 	return e.tmp
 }
 
 var (
-	ERR_REFUSED = &ChanError{err: "Connection refused."}
-	ERR_ADDRINUSE = &ChanError{err: "Address in use."}
-	ERR_ACCTIME = &ChanError{err: "Accept timeout.", tmo: true}
-	ERR_QFULL = &ChanError{err: "Listen queue full.", tmp: true}
-	ERR_CLOSED = &ChanError{err: "Connection closed."}
-	ERR_CONTIME = &ChanError{err: "Connection timeout.", tmo: true}
-	ERR_RDTIME = &ChanError{err: "Read timeout.", tmo: true, tmp: true}
-	ERR_WRTIME = &ChanError{err: "Write timeout.", tmo: true, tmp: true}
+	ErrConnRefused = &ChanError{err: "Connection refused."}
+	ErrAddrInUse = &ChanError{err: "Address in use."}
+	ErrAcceptTimeout = &ChanError{err: "Accept timeout.", tmo: true}
+	ErrListenQFull = &ChanError{err: "Listen queue full.", tmp: true}
+	ErrConnClosed = &ChanError{err: "Connection closed."}
+	ErrConnTimeout = &ChanError{err: "Connection timeout.", tmo: true}
+	ErrRdTimeout = &ChanError{err: "Read timeout.", tmo: true, tmp: true}
+	ErrWrTimeout = &ChanError{err: "Write timeout.", tmo: true, tmp: true}
 )
 
 // listeners acts as a registry of listeners.
@@ -118,7 +122,7 @@ func ListenChan(name string) (*ChanListener, error) {
 		listeners.lst = make(map[string]*ChanListener)
 	}
 	if _, ok := listeners.lst[name]; ok {
-		return nil, ERR_ADDRINUSE
+		return nil, ErrAddrInUse
 	}
 
 	listener := new(ChanListener)
@@ -158,7 +162,7 @@ func (listener *ChanListener) AcceptChan() (*ChanConn, error) {
 	case <-deadline:
 		// NB: its never possible to read from a nil channel.
 		// So this only counts if we have a timer running.
-		return nil, ERR_ACCTIME
+		return nil, ErrAcceptTimeout
 	}
 }
 
@@ -177,7 +181,7 @@ func DialChan(name string) (*ChanConn, error) {
 	}
 	listeners.mtx.Unlock()
 	if listener == nil {
-		return nil, ERR_REFUSED
+		return nil, ErrConnRefused
 	}
 
 	// TBD: This deadline is rather arbitrary
@@ -190,22 +194,22 @@ func DialChan(name string) (*ChanConn, error) {
 	// connect is "non-blocking" in this regard.  As there is a reasonable
 	// listen backlog, this should only happen if lots of clients try to
 	// connect too fast.  In TCP world if this happens it becomes
-	// ECONNREFUSED.  We use ERR_QFULL.
+	// ECONNREFUSED.  We use ErrListenQFull.
 	select {
 	case listener.connect <- creq:
 
 	default:
-		return nil, ERR_QFULL
+		return nil, ErrListenQFull
 	}
 
 	select {
 	case _, ok := <-creq.connected:
 		if !ok {
-			return nil, ERR_CLOSED
+			return nil, ErrConnClosed
 		}
 
 	case <-deadline:
-		return nil, ERR_CONTIME
+		return nil, ErrConnTimeout
 	}
 
 	return creq.conn, nil
@@ -213,43 +217,56 @@ func DialChan(name string) (*ChanConn, error) {
 
 // Close implements the io.Closer interface.  It closes the channel for
 // communications.  Messages that have already been sent may be received
-// by the peer still.
+// by the peer before the peer closes its side of the connection.  A
+// notification is sent to the peer so it will close its side as well.
 func (conn *ChanConn) Close() error {
 	conn.CloseRead()
 	conn.CloseWrite()
 	return nil
 }
 
+// CloseRead closes the read side of the connection.  Addtionally, a
+// notification is sent to the peer, to begin an orderly shutdown of the
+// connection.  No further data may be read from the connection.
 func (conn *ChanConn) CloseRead() error {
 	close(conn.fin)
 	conn.closed = true
 	return nil
 }
 
+// CloseWrite closes the write side of the channel.  After this point, it
+// is illegal to write data on the connection.
 func (conn *ChanConn) CloseWrite() error {
 	close(conn.fifo)
 	return nil
 }
 
+// LocalAddr returns the local address.  For now, both client and server
+// use the same address, which is the key used for Listen or Dial.
 func (conn *ChanConn) LocalAddr() net.Addr {
 	return conn.addr
 }
 
+// RemoteAddr returns the peer's address.  For now, both client and server
+// use the same address, which is the key used for Listen or Dial.
 func (conn *ChanConn) RemoteAddr() net.Addr {
 	return conn.peer.addr
 }
 
+// SetDeadline sets the timeout for both read and write.
 func (conn *ChanConn) SetDeadline(t time.Time) error {
 	conn.rdeadline = t
 	conn.wdeadline = t
 	return nil
 }
 
+// SetReadDeadline sets the timeout for read (receive).
 func (conn *ChanConn) SetReadDeadline(t time.Time) error {
 	conn.rdeadline = t
 	return nil
 }
 
+// SetWriteDeadline sets the timeout for write (send).
 func (conn *ChanConn) SetWriteDeadline(t time.Time) error {
 	conn.wdeadline = t
 	return nil
@@ -275,7 +292,7 @@ func (conn *ChanConn) Read(b []byte) (int, error) {
 
 			case <-timer:
 				// Timeout
-				return len(b), ERR_RDTIME
+				return len(b), ErrRdTimeout
 			}
 		}
 
@@ -304,7 +321,7 @@ func (conn *ChanConn) Write(b []byte) (int, error) {
 	select {
 	case <-conn.peer.fin:
 		// Remote close
-		return n, ERR_CLOSED
+		return n, ErrConnClosed
 
 	case conn.fifo<-b:
 		// Sent it
@@ -312,7 +329,7 @@ func (conn *ChanConn) Write(b []byte) (int, error) {
 
 	case <-deadline:
 		// Timeout
-		return n, ERR_WRTIME
+		return n, ErrWrTimeout
 	}
 }
 
