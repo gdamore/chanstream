@@ -1,5 +1,7 @@
 ## chanstream
 
+[![GoDoc](https://godoc.org/bitbucket.org/gdamore/chanstream?status.png)](https://godoc.org/bitbucket.org/gdamore/chanstream)
+
 Package chanstream implements an API compatible with and similiar to the TCP
 connection (and net.Conn as well) API, on top of Go channels.  This is in
 pure Go, without any external dependencies.
