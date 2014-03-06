@@ -29,7 +29,7 @@ Consider this a work-in-progress, and use at your own risk.
 
 After this command *chanstream* is ready to use. Its source will be in:
 
-    $GOROOT/src/pkg/bitbucket.org/gdamore/zenio
+    $GOROOT/src/pkg/bitbucket.org/gdamore/chanstream
 
 You can use `go get -u -a` to update all installed packages.
 
