@@ -334,11 +334,21 @@ func (conn *ChanConn) Read(b []byte) (int, error) {
 	return len(b), nil
 }
 
+// Write implements the io.Writer interface.
 func (conn *ChanConn) Write(b []byte) (int, error) {
 	// Unlike Read, Write is quite a bit simpler, since
 	// we don't have to deal with buffers.  We just write to the
 	// channel/fifo.  We do have to respect when the peer has notified
 	// us that its side is closed, however.
+
+	// We have to make a copy to ensure that once a message is sent to
+	// us, we are insulated against later modification by the sender.
+	// Later we should consider limiting the size of this array to
+	// prevent someone from trying to send ridiculous message sizes all
+	// at once.  (E.g. avoid trying to alloc and copy 100 megabytes here!)
+	a := make([]byte, len(b))
+	copy(a, b)
+	b = a
 
 	deadline := mkTimer(conn.wdeadline)
 	n := len(b)
