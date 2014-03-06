@@ -20,7 +20,6 @@
 // By using channels, we avoid exposing any
 // interface to other processors, or involving the kernel to perform data
 // copying.
-
 package chanstream
 
 import "net"
