@@ -51,13 +51,38 @@ func (e *ChanError) Temporary() bool {
 }
 
 var (
+	// ErrConnRefused is reported when no listener is present and
+	// a client attempts to connect via Dial.
 	ErrConnRefused = &ChanError{err: "Connection refused."}
+
+	// ErrAddrInUse is reported when a server tries to Listen but another
+	// Conn is already listening on the same address.
 	ErrAddrInUse = &ChanError{err: "Address in use."}
+
+	// ErrAcceptTimeout is reported when a request to Accept takes too
+	// long.  (Note that this is not normally reported -- the default
+	// is for no timeout to be used in Accept.)
 	ErrAcceptTimeout = &ChanError{err: "Accept timeout.", tmo: true}
+
+	// ErrListenQFull is reported if the listen backlog (default 32)
+	// is exhausted.  This normally occurs if a server goroutine does
+	// not call Accept often enough.
 	ErrListenQFull = &ChanError{err: "Listen queue full.", tmp: true}
+
+	// ErrConnClosed is reported when a peer closes the connection while
+	// trying to establish the connection or send data.
 	ErrConnClosed = &ChanError{err: "Connection closed."}
+
+	// ErrConnTimeout is reported when a connection takes too long to
+	// be established.
 	ErrConnTimeout = &ChanError{err: "Connection timeout.", tmo: true}
+
+	// ErrRdTimeout is reported when the read deadline on a connection
+	// expires whle trying to read.
 	ErrRdTimeout = &ChanError{err: "Read timeout.", tmo: true, tmp: true}
+
+	// ErrWrTimeout is reported when the write deadline on a connection
+	// expires whle trying to write.
 	ErrWrTimeout = &ChanError{err: "Write timeout.", tmo: true, tmp: true}
 )
 
@@ -67,7 +92,7 @@ var listeners struct {
 	lst map[string]*ChanListener
 }
 
-// We store just the address, which will normally be something
+// ChanAddr stores just the address, which will normally be something
 // like a path, but any valid string can be used as a key.  This implements
 // the net.Addr interface.
 type ChanAddr struct {
