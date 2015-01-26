@@ -1,6 +1,6 @@
 ## chanstream
 
-[![GoDoc](https://godoc.org/bitbucket.org/gdamore/chanstream?status.png)](https://godoc.org/bitbucket.org/gdamore/chanstream)
+[![Build Status](https://travis-ci.org/gdamore/chanstream.svg?branch=master)](https://travis-ci.org/gdamore/chanstream) [![GoDoc](https://godoc.org/github.com/gdamore/chanstream?status.png)](https://godoc.org/github.com/gdamore/chanstream)
 
 Package chanstream implements an API compatible with and similiar to the TCP
 connection (and net.Conn as well) API, on top of Go channels.  This is in
@@ -27,16 +27,16 @@ Consider this a work-in-progress, and use at your own risk.
 
 ### Using *go get*
 
-    $ go get bitbucket.org/gdamore/chanstream
+    $ go get github.com/gdamore/chanstream
 
 After this command *chanstream* is ready to use. Its source will be in:
 
-    $GOROOT/src/pkg/bitbucket.org/gdamore/chanstream
+    $GOROOT/src/pkg/github.com/gdamore/chanstream
 
 You can use `go get -u -a` to update all installed packages.
 
 ## Documentation
 
-For docs, see http://godoc.org/bitbucket.org/gdamore/chanstream or run:
+For docs, see http://godoc.org/github.com/gdamore/chanstream or run:
 
-    $ go doc bitbucket.org/gdamore/chanstream
+    $ go doc github.com/gdamore/chanstream
