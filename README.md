@@ -40,3 +40,5 @@ You can use `go get -u -a` to update all installed packages.
 For docs, see http://godoc.org/github.com/gdamore/chanstream or run:
 
     $ go doc github.com/gdamore/chanstream
+
+Copyright 2015 Garrett D'Amore <garrett@damore.org>
