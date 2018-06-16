@@ -1,7 +1,7 @@
 // Copyright 2014 Garrett D'Amore
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use file except in compliance with the License. 
+// you may not use file except in compliance with the License.
 // You may obtain a copy of the license at
 //
 //    http://www.apache.org/licenses/LICENSE-2.0
@@ -15,7 +15,7 @@
 // Package chanstream provides an API that is similar to that used for TCP
 // and Unix Domain sockets (see net.TCP), for use in intra-process
 // communication on top of Go channels.  This makes it easy to swap it for
-// another net.Conn interface. 
+// another net.Conn interface.
 //
 // By using channels, we avoid exposing any
 // interface to other processors, or involving the kernel to perform data
@@ -33,7 +33,7 @@ func TestListenAndAccept(t *testing.T) {
 		t.Errorf("ListenChan failed: %v", err)
 		return
 	}
-	
+
 	go func() {
 		t.Logf("Connecting")
 		client, err := DialChan(name)
@@ -83,8 +83,8 @@ func TestEcho(t *testing.T) {
 	name := "test4"
 
 	master := make([]byte, 1024)
-	for i := range(master) {
-		master[i] = uint8(i & 0xff) 
+	for i := range master {
+		master[i] = uint8(i & 0xff)
 	}
 
 	t.Logf("Establishing listener.")
@@ -93,7 +93,7 @@ func TestEcho(t *testing.T) {
 		t.Errorf("ListenChan failed: %v", err)
 		return
 	}
-	
+
 	go func() {
 		// Client side
 		req := make([]byte, len(master))
@@ -113,7 +113,7 @@ func TestEcho(t *testing.T) {
 		t.Logf("Client sent %d bytes, err %v", n, err)
 
 		// Now zero out our path
-		for i := range(req) {
+		for i := range req {
 			req[i] = 1
 		}
 

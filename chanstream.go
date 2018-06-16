@@ -1,7 +1,7 @@
 // Copyright 2014 Garrett D'Amore
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use file except in compliance with the License. 
+// you may not use file except in compliance with the License.
 // You may obtain a copy of the license at
 //
 //    http://www.apache.org/licenses/LICENSE-2.0
@@ -15,7 +15,7 @@
 // Package chanstream provides an API that is similar to that used for TCP
 // and Unix Domain sockets (see net.TCP), for use in intra-process
 // communication on top of Go channels.  This makes it easy to swap it for
-// another net.Conn interface. 
+// another net.Conn interface.
 //
 // By using channels, we avoid exposing any
 // interface to other processors, or involving the kernel to perform data
@@ -44,7 +44,7 @@ func (e *ChanError) Timeout() bool {
 	return e.tmo
 }
 
-// Temporary returns true if the error was temporary in nature.  Operations 
+// Temporary returns true if the error was temporary in nature.  Operations
 // resulting in temporary errors might be expected to succeed at a later time.
 func (e *ChanError) Temporary() bool {
 	return e.tmp
@@ -96,7 +96,7 @@ var listeners struct {
 // like a path, but any valid string can be used as a key.  This implements
 // the net.Addr interface.
 type ChanAddr struct {
-	name	string
+	name string
 }
 
 // String returns the name of the end point -- the listen address.  This
@@ -114,26 +114,26 @@ func (a *ChanAddr) Network() string {
 // using a pair of cross-connected go channels. This provides net.Conn
 // semantics on top of channels.
 type ChanConn struct {
-	fifo		chan []byte
-	fin		chan bool
-	rdeadline	time.Time
-	wdeadline	time.Time
-	peer		*ChanConn
-	pending		[]byte
-	closed		bool
-	addr		*ChanAddr
+	fifo      chan []byte
+	fin       chan bool
+	rdeadline time.Time
+	wdeadline time.Time
+	peer      *ChanConn
+	pending   []byte
+	closed    bool
+	addr      *ChanAddr
 }
 
 type chanConnect struct {
-	conn 		*ChanConn
-	connected	chan bool
+	conn      *ChanConn
+	connected chan bool
 }
 
 // ChanListener is used to listen to a socket.
 type ChanListener struct {
-	name		string
-	connect		chan *chanConnect
-	deadline	time.Time
+	name     string
+	connect  chan *chanConnect
+	deadline time.Time
 }
 
 // ListenChan establishes the server address and receiving
@@ -183,7 +183,7 @@ func (listener *ChanListener) AcceptChan() (*ChanConn, error) {
 		connect.conn = client
 		connect.connected <- true
 		return server, nil
-		
+
 	case <-deadline:
 		// NB: its never possible to read from a nil channel.
 		// So this only counts if we have a timer running.
@@ -300,7 +300,7 @@ func (conn *ChanConn) SetWriteDeadline(t time.Time) error {
 // Read implements the io.Reader interface.
 func (conn *ChanConn) Read(b []byte) (int, error) {
 	b = b[0:0] // empty slice
-	for ; len(b) < cap(b); {
+	for len(b) < cap(b) {
 
 		// get a byte slice from our peer if we don't have one yet
 		if conn.pending == nil || len(conn.pending) == 0 {
@@ -309,7 +309,7 @@ func (conn *ChanConn) Read(b []byte) (int, error) {
 			case msg := <-conn.peer.fifo:
 				if msg != nil {
 					conn.pending = msg
-				} else if (len(b) > 0) {
+				} else if len(b) > 0 {
 					return len(b), nil
 				} else {
 					return 0, io.EOF
@@ -358,7 +358,7 @@ func (conn *ChanConn) Write(b []byte) (int, error) {
 		// Remote close
 		return n, ErrConnClosed
 
-	case conn.fifo<-b:
+	case conn.fifo <- b:
 		// Sent it
 		return n, nil
 
@@ -371,7 +371,7 @@ func (conn *ChanConn) Write(b []byte) (int, error) {
 // ReaderFrom, WriterTo interfaces can give some better performance,
 // but we skip that for now, they're optional interfaces
 // TO Add  Read, Write, (CloseRead, CloseWrite)
-// ReadFrom, WriteTo, 
+// ReadFrom, WriteTo,
 func mkTimer(deadline time.Time) <-chan time.Time {
 
 	if deadline.IsZero() {
@@ -385,6 +385,6 @@ func mkTimer(deadline time.Time) <-chan time.Time {
 		close(tm)
 		return tm
 	}
-			
+
 	return time.After(dur)
 }
